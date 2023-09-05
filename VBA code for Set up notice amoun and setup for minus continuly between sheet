@@ -1,0 +1,33 @@
+Sub Example()
+    ' Loop through sheets 2 to 24
+    Dim i As Integer
+    For i = 2 To 24
+        ' Loop through rows 4 to 11
+        Dim j As Integer
+        For j = 4 To 11
+            ' Build the formula for cell B in the current row
+            Dim formula As String
+            formula = "=" & Sheets(i - 1).Cells(j, 2).Address(External:=True) & "-IF(ISBLANK(" & Sheets(i).Cells(j, 3).Address & "),0," & Sheets(i).Cells(j, 3).Address & ")-IF(ISBLANK(" & Sheets(i).Cells(j, 4).Address & "),0," & Sheets(i).Cells(j, 4).Address & ")-IF(ISBLANK(" & Sheets(i).Cells(j, 5).Address & "),0," & Sheets(i).Cells(j, 5).Address & ")-IF(ISBLANK(" & Sheets(i).Cells(j, 6).Address & "),0," & Sheets(i).Cells(j, 6).Address & ")"
+            ' Set the formula for cell B in the current row
+            Sheets(i).Cells(j, 2).formula = formula
+Next j
+        
+' Apply conditional formatting to cells B4 to B11
+With Sheets(i).Range("B4:B6").FormatConditions.Add(Type:=xlCellValue, Operator:=xlLessEqual, Formula1:="=2500")
+    .Interior.Color = RGB(255, 0, 0)
+End With
+With Sheets(i).Range("B7").FormatConditions.Add(Type:=xlCellValue, Operator:=xlLessEqual, Formula1:="=1000")
+    .Interior.Color = RGB(255, 0, 0)
+End With
+With Sheets(i).Range("B8").FormatConditions.Add(Type:=xlCellValue, Operator:=xlLessEqual, Formula1:="=10000")
+    .Interior.Color = RGB(255, 0, 0)
+End With
+With Sheets(i).Range("B9:B10").FormatConditions.Add(Type:=xlCellValue, Operator:=xlLessEqual, Formula1:="=1000")
+    .Interior.Color = RGB(255, 0, 0)
+End With
+With Sheets(i).Range("B11").FormatConditions.Add(Type:=xlCellValue, Operator:=xlLessEqual, Formula1:="=3000")
+    .Interior.Color = RGB(255, 0, 0)
+End With
+Next i
+End Sub
+
