@@ -1,0 +1,157 @@
+Sub EndingBalance()
+
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Dim Data As Variant
+    Dim Body As String
+    Dim i As Long, j As Long
+    Dim myDate As String
+    Dim sheetIndex As Integer
+    Dim NewBook As Workbook
+    Dim TempFilePath As String
+    Dim TempFileName As String
+    Dim found As Boolean
+    Dim ws As Worksheet
+    Dim cell As Range
+    Dim bgColor As String, fontColor As String, fontWeight As String
+    Dim borderTop As String, borderRight As String, borderBottom As String, borderLeft As String
+
+    Set OutApp = CreateObject("Outlook.Application")
+
+    Set OutMail = OutApp.CreateItem(0)
+
+    myDate = Format(Date - 1, "M/d/yyyy")
+
+    Body = "Good morning this is the Ending balance as of " & myDate & vbCrLf
+
+    found = False
+
+    For Each ws In ThisWorkbook.Sheets
+        For Each cell In ws.UsedRange
+            If cell.Value = myDate Then
+                sheetIndex = ws.Index
+                found = True
+                Exit For
+            End If
+        Next cell
+        If found Then Exit For
+    Next ws
+
+    If Not found Then
+        MsgBox "No sheet found with date " & myDate
+        Exit Sub
+    End If
+
+' Get the data from the sheet using CurrentRegion property of first cell instead of UsedRange property.
+Data = ThisWorkbook.Sheets(sheetIndex).Cells(1, 1).CurrentRegion.Value
+
+' Create a table in the email body to display the data and format it to have the same color, bold text, and border as the sheet.
+Body = Body & "<table style='border-collapse: collapse;'>"
+For i = LBound(Data, 1) To UBound(Data, 1)
+    Body = Body & "<tr>"
+    For j = LBound(Data, 2) To UBound(Data, 2)
+        ' Get the cell format from the sheet.
+        With ThisWorkbook.Sheets(sheetIndex).Cells(i, j)
+            ' Get the cell background color.
+            If .Interior.ColorIndex <> xlNone Then
+                bgColor = Right("000000" & Hex(.Interior.Color), 6)
+                bgColor = "#" & Right(bgColor, 2) & Mid(bgColor, 3, 2) & Left(bgColor, 2)
+            Else
+                bgColor = "transparent"
+            End If
+
+            ' Get the cell font color.
+            fontColor = Right("000000" & Hex(.Font.Color), 6)
+            fontColor = "#" & Right(fontColor, 2) & Mid(fontColor, 3, 2) & Left(fontColor, 2)
+
+            ' Get the cell font weight (bold or normal).
+            If .Font.Bold Then
+                fontWeight = "bold"
+            Else
+                fontWeight = "normal"
+            End If
+
+            ' Get the cell border style and color.
+            If .Borders(xlEdgeTop).LineStyle <> xlNone Then
+                borderTop = .Borders(xlEdgeTop).Weight & "px solid #" & Right("000000" & Hex(.Borders(xlEdgeTop).Color), 6)
+            Else
+                borderTop = "none"
+            End If
+
+            If .Borders(xlEdgeRight).LineStyle <> xlNone Then
+                borderRight = .Borders(xlEdgeRight).Weight & "px solid #" & Right("000000" & Hex(.Borders(xlEdgeRight).Color), 6)
+            Else
+                borderRight = "none"
+            End If
+
+            If .Borders(xlEdgeBottom).LineStyle <> xlNone Then
+                borderBottom = .Borders(xlEdgeBottom).Weight & "px solid #" & Right("000000" & Hex(.Borders(xlEdgeBottom).Color), 6)
+            Else
+                borderBottom = "none"
+            End If
+
+            If .Borders(xlEdgeLeft).LineStyle <> xlNone Then
+                borderLeft = .Borders(xlEdgeLeft).Weight & "px solid #" & Right("000000" & Hex(.Borders(xlEdgeLeft).Color), 6)
+            Else
+                borderLeft = "none"
+            End If
+            
+             ' Get the cell currency format.
+             Dim currencyFormat As String
+             currencyFormat = .NumberFormat
+             
+             ' Remove parentheses and question mark from the currency format.
+             currencyFormat = Replace(currencyFormat, "_(", "")
+             currencyFormat = Replace(currencyFormat, "_)", "")
+             currencyFormat = Replace(currencyFormat, "?", "")
+             
+             ' Add the cell data to the table with inline CSS styles to format the cell.
+             Body = Body & "<td style='background-color: " & bgColor & "; color: " & fontColor & "; font-weight: " & fontWeight & "; border-top: " & borderTop & "; border-right: " & borderRight & "; border-bottom: " & borderBottom & "; border-left: " & borderLeft & ";'>"
+             If currencyFormat <> "General" Then
+                 Body = Body & Format(Data(i, j), currencyFormat)
+             Else
+                 Body = Body & Data(i, j)
+             End If
+             Body = Body & "</td>"
+
+        End With
+
+    Next j
+    Body = Body & "</tr>"
+Next i
+Body = Body & "</table>"
+
+    Set NewBook = Workbooks.Add
+    ThisWorkbook.Sheets(sheetIndex).Copy Before:=NewBook.Sheets(1)
+
+    While NewBook.Sheets.Count > 1
+        NewBook.Sheets(2).Delete
+    Wend
+
+    TempFilePath = Environ$("temp") & "\"
+    TempFileName = "Sheet with date " & Replace(myDate, "/", "-") & Format(Now, " dd-mmm-yy h-mm-ss")
+    NewBook.SaveAs TempFilePath & TempFileName & ".xlsx", FileFormat:=51
+
+' Set the HTMLBody property of the OutMail object to display the table in the email
+With OutMail
+    .To = "seng.kimnay@u-pay.com"
+    .CC = "mon.sara@u-pay.com;ngor.chanrithy@u-pay.com;seng.solinna@u-pay.com"
+    .BCC = ""
+    .Subject = "Ending Balance as of " & myDate
+    .HTMLBody = Body ' Use HTMLBody instead of Body to display HTML content in the email body.
+    .Attachments.Add (TempFilePath & TempFileName & ".xlsx")
+    .Send ' Use .Display instead of .Send to display the email instead of sending it automatically.
+End With
+
+NewBook.Close SaveChanges:=False
+
+Kill TempFilePath & TempFileName & ".xlsx"
+
+Set OutMail = Nothing
+
+Set OutApp = Nothing
+
+End Sub
+
+
+
