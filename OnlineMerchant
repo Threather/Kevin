@@ -1,0 +1,125 @@
+import os
+import win32com.client
+from datetime import datetime, timedelta
+
+# Create an instance of the Excel application
+excel = win32com.client.Dispatch("Excel.Application")
+
+# Open the first Excel file and run a macro
+workbook1 = excel.Workbooks.Open(r"Y:\Kevin\Nara\Connection file\Connection file VBA.xlsm")
+workbook1.RefreshAll()
+excel.Run("Module1.Egets")
+workbook1.Save()
+
+# Suppress prompts and alerts
+excel.DisplayAlerts = False
+
+# Close the workbook
+workbook1.Close()
+
+# Restore prompts and alerts
+excel.DisplayAlerts = True
+
+# Open the second Excel file and run a macro
+workbook2 = excel.Workbooks.Open(r"Y:\Kevin\Nara\E-Gets Form template\E-Gets Withdrawal.xlsm")
+excel.Run("Module1.CopyAndInputData")
+workbook2.Save()
+
+# Suppress prompts and alerts
+excel.DisplayAlerts = False
+
+# Close the workbook
+workbook2.Close()
+
+# Restore prompts and alerts
+excel.DisplayAlerts = True
+
+# Open the third Excel file, refresh its data connections, and run a macro
+workbook3 = excel.Workbooks.Open(r"Y:\Kevin\Nara\MC\Connection file\ConnectionfileMC-Macro.xlsm")
+workbook3.RefreshAll()
+excel.Run("Module1.FilterColumn")
+
+# Suppress prompts and alerts
+excel.DisplayAlerts = False
+
+# Close the workbook
+workbook3.Close()
+
+# Restore prompts and alerts
+excel.DisplayAlerts = True
+
+# Get yesterday's date and format it as a string
+yesterday = datetime.now() - timedelta(days=1)
+formatted_date = yesterday.strftime('%d %B %Y')
+
+# Build the file path using the formatted date
+file_path = r"Y:\Kevin\Nara\MC\Saved\MC Txn as of " + formatted_date + ".xlsx"
+
+# Open the fourth Excel file
+workbook4 = excel.Workbooks.Open(file_path)
+
+# Get the text and formatting from a range of cells
+my_range = workbook4.Worksheets(1).Range("A1:C3")
+text = "<table>"
+for row in my_range.Rows:
+    text += "<tr>"
+    for cell in row.Cells:
+        # Get the cell color
+        color = int(cell.Interior.Color)
+        color = "#" + hex(color)[2:].zfill(6)
+        
+        # Get the cell font weight
+        if cell.Font.Bold:
+            font_weight = "bold"
+        else:
+            font_weight = "normal"
+        
+        # Add the cell to the table
+        text += f"<td style='background-color: {color}; font-weight: {font_weight};'>{cell.Value}</td>"
+    text += "</tr>"
+text += "</table>"
+
+# Suppress prompts and alerts
+excel.DisplayAlerts = False
+
+# Close the fourth Excel file
+workbook4.Close()
+
+# Restore prompts and alerts
+excel.DisplayAlerts = True
+
+# Quit the Excel application
+excel.Quit()
+
+print("Completed")
+
+# Get current date and format as string
+current_date = datetime.now()
+formatted_date = current_date.strftime('%d %B %Y')
+
+# Build file paths
+file_path1 = r"Y:\Kevin\Nara\Online Merchant\E-Gets\Daily Successful Online Payment Gateway Transaction on " + formatted_date + ".xlsx"
+file_path2 = r"Y:\Kevin\Nara\E-Gets Form template\Form\E-Gets Withdrawal form " + formatted_date + ".xlsm"
+
+# Get yesterday's date and format it as a string
+yesterday = datetime.now() - timedelta(days=1)
+formatted_date = yesterday.strftime('%d %B %Y')
+
+# Build the file path using the formatted date
+file_path3 = r"Y:\Kevin\Nara\MC\Saved\MC Txn as of " + formatted_date + ".xlsx"
+
+# Send email with attachment using Outlook
+outlook_app = win32com.client.Dispatch("Outlook.Application")
+email_item = outlook_app.CreateItem(0)
+
+email_item.Subject = "E-GetS Transactions"
+email_item.BodyFormat = 2  # olFormatHTML
+email_item.HTMLBody = "Good Morning, This is E-GetS Transaction, Please find the attached excel for your reference<br><br>" + text
+email_item.Recipients.Add("sun.nara@u-pay.com")
+email_item.Attachments.Add(file_path1)
+email_item.Attachments.Add(file_path2)
+email_item.Attachments.Add(file_path3)
+
+email_item.Send()
+
+print("Email sent successfully!")
