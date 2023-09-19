@@ -1,0 +1,139 @@
+Sub SaveFile_new()
+    ' Turn off screen updating
+    Application.ScreenUpdating = False
+
+    Dim SourceWB As String
+    Dim SaveToFolder As String
+    Dim elm As Variant
+    Dim Invoice As String
+    Dim Start_Invoice_No
+
+    'Activate ori workbook
+    ThisWorkbook.Activate
+
+    Set template = ThisWorkbook
+
+    'Open the source file, set name for source file
+    SourceWB = Sheets("Control").Range("B2")
+    Workbooks.Open SourceWB
+    Set Source = ActiveWorkbook
+
+    'Check if the folder exists, if no create one
+    template.Activate
+    Start_Invoice_No = Sheets("Control").Range("B4")
+    SaveToFolder = Sheets("Control").Range("B3")
+
+        If Right(SaveToFolder, 1) <> "\" Then
+        SaveToFolder = SaveToFolder + "\"
+        End If
+        
+        strCheckPath = ""
+        For Each elm In Split(SaveToFolder, "\")
+            strCheckPath = strCheckPath & elm & "\"
+            If Len(Dir(strCheckPath, vbDirectory)) = 0 Then MkDir strCheckPath
+        Next
+
+    'Fill in information for item sold
+    n = Start_Invoice_No
+
+    Do While Source.Sheets(1).Cells(n, 2).Value <> ""
+        template.Activate
+        
+        With Sheets("Template")
+
+            'Clear the content
+            If Not .Range("A21:H28").MergeCells Then .Range("A21:H28").ClearContents
+
+            'Khm Name
+            If Not .Range("B10").MergeCells Then .Range("B10").Value = Source.Sheets(1).Cells(n, 24)
+            'Eng Name
+            If Not .Range("B11").MergeCells Then .Range("B11").Value = Source.Sheets(1).Cells(n, 23)
+            'Khm Address
+            If Not .Range("B13").MergeCells Then .Range("B13").Value = Source.Sheets(1).Cells(n, 26)
+            'Eng Address
+            If Not .Range("B15").MergeCells Then .Range("B15").Value = Source.Sheets(1).Cells(n, 25)
+            'Phone No.
+            'If Not .Range("D30").MergeCells Then .Range("D30").Value = Source.Sheets(1).Cells(n, 19)
+            'Date
+            If Not .Range("H10").MergeCells Then .Range("H10").Value = Source.Sheets(1).Cells(n, 16)
+            'Invoice No
+            If Not .Range("H11").MergeCells Then .Range("H11").Value = Source.Sheets(1).Cells(n, 22)
+            'Dealer ID
+            'If Not .Range("H12").MergeCells Then .Range("H12").Value = Source.Sheets(1).Cells(n, 2)
+            'Exchange rate
+            'If Not .Range("H16").MergeCells Then .Range("H16").Value = Source.Sheets(1).Cells(n, 27)
+            'Commission
+            'If Not .Range("H32").MergeCells Then .Range("H32").Value = Source.Sheets(1).Cells(n, 28)
+
+        End With
+
+        Invoice = Source.Sheets(1).Cells(n, 22)
+
+        m = 1
+        
+        With Sheets("Template")
+        
+            'No
+            If Not .Cells(m + 20, 1).MergeCells Then .Cells(m + 20, 1).Value = m
+            
+            'Description
+            If Not .Cells(m + 20, 2).MergeCells Then .Cells(m + 20, 2).Value = Source.Sheets(1).Cells(n, 7)
+            
+            'Order quantity
+            If Not .Cells(m + 20, 5).MergeCells Then .Cells(m + 20, 5).Value = Source.Sheets(1).Cells(n, 8)
+            
+            'Unit price
+            If Not .Cells(m + 20, 6).MergeCells Then .Cells(m + 20, 6).Value = Source.Sheets(1).Cells(n, 9)
+            
+            'Total Sale Amount
+            If Not .Cells(m + 20, 8).MergeCells Then .Cells(m + 20, 8).Value = Source.Sheets(1).Cells(n, 10)
+
+        End With
+        
+        If Source.Sheets(1).Cells(n, 2) <> Source.Sheets(1).Cells(n + 1, 2) Then
+            
+        Else
+            
+                m = 2
+                
+                Do While Source.Sheets(1).Cells(n, 2).Value = Source.Sheets(1).Cells(n + 1, 2).Value
+                    
+                    n = n + 1
+                    
+                    With Sheets("Template")
+                    
+                        If Not .Cells(m + 20, 1).MergeCells Then .Cells(m + 20, 1).Value = m
+                        
+                        If Not .Cells(m + 20, 2).MergeCells Then .Cells(m + 20, 2).Value = Source.Sheets(1).Cells(n, 7)
+                        
+                        If Not .Cells(m + 20, 5).MergeCells Then .Cells(m + 20, 5).Value = Source.Sheets(1).Cells(n, 8)
+                        
+                        If Not .Cells(m + 20, 6).MergeCells Then .Cells(m + 20, 6).Value = Source.Sheets(1).Cells(n, 9)
+                        
+                        If Not .Cells(m + 20, 8).MergeCells Then .Cells(m + 20, 8).Value = Source.Sheets(1).Cells(n, 10)
+
+                    End With
+                    
+                    m = m + 1
+                    
+                Loop
+        End If
+
+        'Copy to new excel, save and close
+        Sheets("Template").Select
+        Sheets("Template").Copy
+        
+        Name = SaveToFolder + Invoice + ".pdf"
+
+        ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=Name
+
+        ActiveWorkbook.Close False
+
+        n = n + 1
+
+    Loop
+
+    ' Turn on screen updating
+    Application.ScreenUpdating = True
+
+End Sub
