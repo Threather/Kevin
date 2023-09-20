@@ -1,0 +1,48 @@
+Sub OpenFileFromControlSheet()
+    Dim filePath As String
+    Dim sheetName As String
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim dict As Object
+
+    ' Get the file path from cell B1 in the "Control" sheet
+    filePath = ThisWorkbook.Sheets("Control").Range("B1").Value
+
+    ' Check if the file exists before trying to open it
+    If Dir(filePath) <> "" Then
+        Set wb = Workbooks.Open(filePath)
+        
+        ' Get the sheet name from cell B3 in the "Control" sheet
+        sheetName = ThisWorkbook.Sheets("Control").Range("B3").Value
+        
+        ' Check if the sheet exists in the opened workbook before trying to activate it
+        On Error Resume Next
+        Set ws = wb.Sheets(sheetName)
+        On Error GoTo 0
+        
+        If Not ws Is Nothing Then
+            ws.Activate
+            
+            ' Create a dictionary to store unique values
+            Set dict = CreateObject("Scripting.Dictionary")
+            
+            ' Loop through each cell in column G from row 2 to the last row
+            For Each cell In ws.Range("G2:G" & ws.Cells(ws.Rows.Count, "G").End(xlUp).Row)
+                dict(cell.Value) = 1 ' Add unique cell value to dictionary
+            Next cell
+            
+            ' Paste unique values from dictionary to "Templated" sheet in original workbook, starting from cell A2
+            ThisWorkbook.Sheets("Templated").Range("A2").Resize(dict.Count, 1).Value = Application.Transpose(dict.keys)
+            
+        Else
+            MsgBox "Sheet not found: " & sheetName, vbExclamation
+        End If
+        
+    Else
+        MsgBox "File not found: " & filePath, vbExclamation
+    End If
+    
+End Sub
+
