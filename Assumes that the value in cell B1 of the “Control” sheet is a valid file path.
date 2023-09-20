@@ -1,0 +1,11 @@
+Sub OpenFileFromControlSheet()
+    Dim filePath As String
+    ' Get the file path from cell B1 in the "Control" sheet
+    filePath = ThisWorkbook.Sheets("Control").Range("B1").Value
+    ' Check if the file exists before trying to open it
+    If Dir(filePath) <> "" Then
+        Workbooks.Open filePath
+    Else
+        MsgBox "File not found: " & filePath, vbExclamation
+    End If
+End Sub
