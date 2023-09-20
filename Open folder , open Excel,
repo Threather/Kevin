@@ -1,0 +1,74 @@
+Sub OpenFolderPath()
+    Dim ws As Worksheet
+    Dim folderPath As String
+    Dim subFolderPath As String
+    Dim subSubFolderPath As String
+    Dim subSubSubFolderPath As String
+
+    ' Set the worksheet
+    Set ws = ThisWorkbook.Sheets("Control")
+
+    ' Get the folder path from cell B1
+    folderPath = ws.Range("B1").Value
+
+    ' Check if the folder exists
+    If Len(Dir(folderPath, vbDirectory)) = 0 Then
+        MsgBox "The folder in B1 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the folder
+    Shell "explorer.exe " & folderPath, vbNormalFocus
+
+    ' Get the subfolder name from cell B2 and combine it with the folder path
+    subFolderPath = folderPath & "\" & ws.Range("B2").Value
+
+    ' Check if the subfolder exists
+    If Len(Dir(subFolderPath, vbDirectory)) = 0 Then
+        MsgBox "The subfolder in B2 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the subfolder
+    Shell "explorer.exe " & subFolderPath, vbNormalFocus
+
+    ' Get the sub-subfolder name from cell B3 and combine it with the subfolder path
+    subSubFolderPath = subFolderPath & "\" & ws.Range("B3").Value
+
+    ' Check if the sub-subfolder exists
+    If Len(Dir(subSubFolderPath, vbDirectory)) = 0 Then
+        MsgBox "The sub-subfolder in B3 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the sub-subfolder
+    Shell "explorer.exe " & subSubFolderPath, vbNormalFocus
+
+    ' Get the sub-sub-subfolder name from cell B4 and combine it with the sub-subfolder path
+    subSubSubFolderPath = subSubFolderPath & "\" & ws.Range("B4").Value
+
+    ' Check if the sub-sub-subfolder exists
+    If Len(Dir(subSubSubFolderPath, vbDirectory)) = 0 Then
+        MsgBox "The sub-sub-subfolder in B4 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the sub-sub-subfolder
+    Shell "explorer.exe " & subSubSubFolderPath, vbNormalFocus
+    
+     ' Define a variable to hold the filename
+     Dim fileName As String
+     
+     ' Get the first Excel file in the folder
+     fileName = Dir(subSubSubFolderPath & "\*.xls*")
+     
+     ' Loop through all Excel files in the folder
+     While fileName <> ""
+         ' Open the Excel file
+         Workbooks.Open fileName:=subSubSubFolderPath & "\" & fileName
+         
+         ' Get the next Excel file in the folder
+         fileName = Dir
+     Wend
+End Sub
+
