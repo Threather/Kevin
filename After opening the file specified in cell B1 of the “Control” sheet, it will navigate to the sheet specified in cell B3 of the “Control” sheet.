@@ -1,0 +1,30 @@
+Sub OpenFileFromControlSheet()
+    Dim filePath As String
+    Dim sheetName As String
+    Dim wb As Workbook
+
+    ' Get the file path from cell B1 in the "Control" sheet
+    filePath = ThisWorkbook.Sheets("Control").Range("B1").Value
+
+    ' Check if the file exists before trying to open it
+    If Dir(filePath) <> "" Then
+        Set wb = Workbooks.Open(filePath)
+        
+        ' Get the sheet name from cell B3 in the "Control" sheet
+        sheetName = ThisWorkbook.Sheets("Control").Range("B3").Value
+        
+        ' Check if the sheet exists in the opened workbook before trying to activate it
+        On Error Resume Next
+        Set ws = wb.Sheets(sheetName)
+        On Error GoTo 0
+        
+        If Not ws Is Nothing Then
+            ws.Activate
+        Else
+            MsgBox "Sheet not found: " & sheetName, vbExclamation
+        End If
+        
+    Else
+        MsgBox "File not found: " & filePath, vbExclamation
+    End If
+End Sub
