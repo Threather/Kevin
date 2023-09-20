@@ -1,0 +1,68 @@
+Sub OpenFileFromControlSheet()
+    Dim filePath As String
+    Dim sheetName As String
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim dict As Object
+    Dim dictF As Object
+    Dim dictD As Object
+    Dim i As Long
+
+    ' Get the file path from cell B1 in the "Control" sheet
+    filePath = ThisWorkbook.Sheets("Control").Range("B1").Value
+
+    ' Check if the file exists before trying to open it
+    If Dir(filePath) <> "" Then
+        Set wb = Workbooks.Open(filePath)
+        
+        ' Get the sheet name from cell B3 in the "Control" sheet
+        sheetName = ThisWorkbook.Sheets("Control").Range("B3").Value
+        
+        ' Check if the sheet exists in the opened workbook before trying to activate it
+        On Error Resume Next
+        Set ws = wb.Sheets(sheetName)
+        On Error GoTo 0
+        
+        If Not ws Is Nothing Then
+            ws.Activate
+            
+            ' Create a dictionary to store unique values from column G and corresponding values from columns F and D
+            Set dict = CreateObject("Scripting.Dictionary")
+            Set dictF = CreateObject("Scripting.Dictionary")
+            Set dictD = CreateObject("Scripting.Dictionary")
+            
+            ' Loop through each cell in column G from row 2 to the last row
+            For Each cell In ws.Range("G2:G" & ws.Cells(ws.Rows.Count, "G").End(xlUp).Row)
+                If Not dict.Exists(cell.Value) Then ' Add unique cell value to dictionary
+                    dict(cell.Value) = 1 
+                    dictF(cell.Value) = cell.Offset(0, -1).Value ' Store corresponding value from column F
+                    dictD(cell.Value) = cell.Offset(0, -3).Value ' Store corresponding value from column D
+                Else ' If cell value already exists in dictionary, append new unique value from column D separated by comma
+                    If InStr(dictD(cell.Value), cell.Offset(0, -3).Value) = 0 Then 
+                        dictD(cell.Value) = dictD(cell.Value) & ", " & cell.Offset(0, -3).Value 
+                    End If 
+                End If 
+            Next cell
+            
+            ' Paste unique values from dictionary to "Templated" sheet in original workbook, starting from cell A2
+            ThisWorkbook.Sheets("Templated").Range("A2").Resize(dict.Count, 1).Value = Application.Transpose(dict.keys)
+            
+            ' Match unique values in column A with values in column G and place corresponding unique values from columns F and D into columns B and C respectively
+            For i = 2 To ThisWorkbook.Sheets("Templated").Cells(ThisWorkbook.Sheets("Templated").Rows.Count, "A").End(xlUp).Row
+                If dict.Exists(ThisWorkbook.Sheets("Templated").Cells(i, "A").Value) Then 
+                    ThisWorkbook.Sheets("Templated").Cells(i, "B").Value = dictF(ThisWorkbook.Sheets("Templated").Cells(i, "A").Value)
+                    ThisWorkbook.Sheets("Templated").Cells(i, "C").Value = dictD(ThisWorkbook.Sheets("Templated").Cells(i, "A").Value)
+                End If 
+            Next i
+            
+        Else 
+            MsgBox "Sheet not found: " & sheetName, vbExclamation 
+        End If 
+        
+    Else 
+        MsgBox "File not found: " & filePath, vbExclamation 
+    End If 
+    
+End Sub 
