@@ -56,19 +56,41 @@ Sub OpenFolderPath()
     ' Open the sub-sub-subfolder
     Shell "explorer.exe " & subSubSubFolderPath, vbNormalFocus
     
-     ' Define a variable to hold the filename
+     ' Define variables for Excel operation
      Dim fileName As String
-     
-     ' Get the first Excel file in the folder
-     fileName = Dir(subSubSubFolderPath & "\*.xls*")
-     
-     ' Loop through all Excel files in the folder
-     While fileName <> ""
-         ' Open the Excel file
-         Workbooks.Open fileName:=subSubSubFolderPath & "\" & fileName
-         
-         ' Get the next Excel file in the folder
+     Dim wb As Workbook
+     Dim wsSource As Worksheet
+     Dim wsDest As Worksheet
+     Dim lastRowSource As Long
+     Dim lastRowDest As Long
+
+     ' Set the destination worksheet
+     Set wsDest = ThisWorkbook.Sheets("Combine data")
+
+     ' Get the first file name in the folder
+     fileName = Dir(subSubSubFolderPath & "\*.xlsx")
+
+     ' Loop through each Excel file in the folder
+     Do While fileName <> ""
+         ' Open the workbook
+         Set wb = Workbooks.Open(subSubSubFolderPath & "\" & fileName)
+
+         ' Set the source worksheet
+         Set wsSource = wb.Sheets("SIM")
+
+         ' Find the last row of data in source and destination worksheets
+         lastRowSource = wsSource.Cells(wsSource.Rows.Count, "A").End(xlUp).Row
+         lastRowDest = wsDest.Cells(wsDest.Rows.Count, "A").End(xlUp).Row + 1
+
+         ' Copy data from source to destination worksheet
+         wsSource.Range("A2:L" & lastRowSource).Copy wsDest.Range("A" & lastRowDest)
+
+         ' Close source workbook without saving changes
+         wb.Close SaveChanges:=False
+
+         ' Get next file name in folder
          fileName = Dir
-     Wend
+     Loop
+
 End Sub
 
