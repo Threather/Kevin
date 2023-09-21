@@ -1,0 +1,124 @@
+Sub OpenFolderPath()
+    Dim ws As Worksheet
+    Dim folderPath As String
+    Dim subFolderPath As String
+    Dim subSubFolderPath As String
+    Dim subSubSubFolderPath As String
+
+    ' Set the worksheet
+    Set ws = ThisWorkbook.Sheets("Control")
+
+    ' Get the folder path from cell B1
+    folderPath = ws.Range("B1").Value
+
+    ' Check if the folder exists
+    If Len(Dir(folderPath, vbDirectory)) = 0 Then
+        MsgBox "The folder in B1 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the folder
+    Shell "explorer.exe " & folderPath, vbNormalFocus
+
+    ' Get the subfolder name from cell B2 and combine it with the folder path
+    subFolderPath = folderPath & "\" & ws.Range("B2").Value
+
+    ' Check if the subfolder exists
+    If Len(Dir(subFolderPath, vbDirectory)) = 0 Then
+        MsgBox "The subfolder in B2 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the subfolder
+    Shell "explorer.exe " & subFolderPath, vbNormalFocus
+
+    ' Get the sub-subfolder name from cell B3 and combine it with the subfolder path
+    subSubFolderPath = subFolderPath & "\" & ws.Range("B3").Value
+
+    ' Check if the sub-subfolder exists
+    If Len(Dir(subSubFolderPath, vbDirectory)) = 0 Then
+        MsgBox "The sub-subfolder in B3 does not exist.", vbInformation
+        Exit Sub
+    End If
+
+    ' Open the sub-subfolder
+    Shell "explorer.exe " & subSubFolderPath, vbNormalFocus
+
+    ' Get the sub-sub-subfolder name from cell B4 and combine it with the sub-subfolder path
+    subSubSubFolderPath = subSubFolderPath & "\" & ws.Range("B4").Value
+
+     ' Define variables for Excel operation
+     Dim fileName As String
+     Dim wb As Workbook
+     Dim wsSource As Worksheet
+     Dim wsDest As Worksheet
+     Dim lastRowSource As Long
+     Dim lastRowDest As Long
+
+     ' Set the destination worksheet
+     Set wsDest = ThisWorkbook.Sheets("Combine data")
+
+     ' Get the first file name in the folder
+     fileName = Dir(subSubSubFolderPath & "\*.xlsx")
+
+     ' Loop through each Excel file in the folder
+     Do While fileName <> ""
+         ' Open the workbook
+         Set wb = Workbooks.Open(subSubSubFolderPath & "\" & fileName)
+
+         ' Set the source worksheet
+         Set wsSource = wb.Sheets("SIM")
+
+         ' Find the last row of data in source and destination worksheets
+         lastRowSource = wsSource.Cells(wsSource.Rows.Count, "A").End(xlUp).Row
+         lastRowDest = wsDest.Cells(wsDest.Rows.Count, "A").End(xlUp).Row + 1
+
+         ' Copy data from source to destination worksheet
+         wsSource.Range("A2:L" & lastRowSource).Copy wsDest.Range("A" & lastRowDest)
+
+         ' Close source workbook without saving changes
+         wb.Close SaveChanges:=False
+
+         ' Get next file name in folder
+         fileName = Dir
+
+         ' Remove "-" from each cell in column A of Combine data sheet after copying data from source to destination worksheet.
+         For i = 1 To lastRowDest
+             wsDest.Cells(i, "A").Value = Replace(wsDest.Cells(i, "A").Value, "-", "")
+         Next i
+     Loop
+
+     ' Define variables for saving operation
+     Dim saveFolderPath As String
+     Dim wbNew As Workbook
+
+     ' Get save folder path from cell B5
+     saveFolderPath = ws.Range("B5").Value
+
+     ' Check if save folder exists
+     If Len(Dir(saveFolderPath, vbDirectory)) = 0 Then
+         MsgBox "The save folder in B5 does not exist.", vbInformation
+         Exit Sub
+     End If
+
+     ' Copy "Combine data" sheet to new workbook and set new workbook as active workbook.
+     wsDest.Copy
+
+     Set wbNew = ActiveWorkbook
+
+      ' Get date components from Control sheet and create filename based on date components.
+      Dim day As String
+      Dim month As String
+      Dim year As String
+
+      day = ws.Range("B4").Value
+      month = ws.Range("B3").Value
+      year = ws.Range("B2").Value
+
+      fileName = "Sale Report as of " & day & "-" & month & "-" & year & ".xlsx"
+
+      ' Save new workbook to save folder path with dynamic filename and close it.
+      wbNew.SaveAs saveFolderPath & "\" & fileName
+      wbNew.Close SaveChanges:=False
+End Sub
+
